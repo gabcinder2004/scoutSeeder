@@ -1,10 +1,4 @@
-import * as DAL from '../dataAccess';
 import * as AhaController from '../controllers/aha';
-import * as QueueNames from '../util/queueNames';
-
-const _ = require('lodash');
-const kue = require('kue');
-const queue = kue.createQueue();
 
 function cleanReleaseObject(r, product) {
   return {

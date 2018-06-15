@@ -3,35 +3,45 @@ const queue = kue.createQueue();
 const _ = require('lodash');
 
 import * as DAL from '../dataAccess';
-import * as Seeder from '../seeders';
+import * as Loader from '../loaders';
 import * as queueNames from '../util/queueNames';
 import * as config from '../config';
 
 export function processAhaJobsFromQueue() {
-  const maxRequestLimit = 250;
-  let requestsMade = 0;
-  let timeout = 100;
+  const ahaMaxRequestLimit = 250;
+  const jiraMaxRequestLimit = 500;
+  let ahaRequestsMade = 0;
+  let jiraRequestsMade = 0;
+  let ahaTimeout = 100;
+  let jiraTimeout = 100;
 
   const checkRequestsCount = j => {
-    if (requestsMade > maxRequestLimit) {
-      timeout = 120000;
-      requestsMade = 0;
+    if (ahaRequestsMade > ahaMaxRequestLimit) {
+      ahaTimeout = 120000;
+      ahaRequestsMade = 0;
 
-      console.log(`[${j.type}] Waiting ${timeout / 1000} seconds`);
+      console.log(`[AHA] Waiting ${ahaTimeout / 1000} seconds`);
+      return;
+    }
+
+    if (jiraRequestsMade > jiraMaxRequestLimit) {
+      jiraTimeout = 300000;
+      jiraRequestsMade = 0;
+      console.log(`[JIRA] Waiting ${jiraTimeout / 1000} seconds`);
       return;
     }
   };
 
   // PRODUCTS
   queue.process(queueNames.list_products, (j, done) => {
-    requestsMade++;
+    ahaRequestsMade++;
     checkRequestsCount(j);
 
     setTimeout(() => {
-      console.log(`[#${requestsMade}][${j.type}] Processing all products`);
-      timeout = 100;
+      console.log(`[#${ahaRequestsMade}][${j.type}] Processing all products`);
+      ahaTimeout = 100;
 
-      Seeder.AhaProduct.getAllProducts()
+      Loader.AhaProduct.getAllProducts()
         .then(products => {
           const filteredProducts = _.filter(products, product => {
             return _.includes(config.aha_whitelist.products, product.id);
@@ -47,42 +57,42 @@ export function processAhaJobsFromQueue() {
         .catch(err => {
           throw err;
         });
-    }, timeout);
+    }, ahaTimeout);
   });
 
   queue.process(queueNames.seed_products, (j, done) => {
-    requestsMade++;
+    ahaRequestsMade++;
     checkRequestsCount(j);
 
     setTimeout(() => {
       console.log(
-        `[#${requestsMade}][${j.type}] Processing product: ${j.data.product.name}`
+        `[#${ahaRequestsMade}][${j.type}] Processing product: ${j.data.product.name}`
       );
-      timeout = 100;
-      Seeder.AhaProduct.getDetailedProduct(j.data.product).then(p => {
-        DAL.Aha.Product.create(p).then(saved_product => {
+      ahaTimeout = 100;
+      Loader.AhaProduct.getDetailedProduct(j.data.product).then(p => {
+        DAL.Aha.Product.create(p).then(() => {
           queue.create(queueNames.list_releases, { product: p }).save();
           done();
         });
       });
-    }, timeout);
+    }, ahaTimeout);
   });
 
   // RELEASES
 
   queue.process(queueNames.list_releases, (j, done) => {
-    requestsMade++;
+    ahaRequestsMade++;
     checkRequestsCount(j);
 
     setTimeout(() => {
       console.log(
-        `[#${requestsMade}][${j.type}] Processing releases for ${
+        `[#${ahaRequestsMade}][${j.type}] Processing releases for ${
           j.data.product.name
         }`
       );
-      timeout = 100;
+      ahaTimeout = 100;
 
-      Seeder.AhaRelease.getAllReleasesForProduct(j.data.product)
+      Loader.AhaRelease.getAllReleasesForProduct(j.data.product)
         .then((releases) => {
           const filteredReleases = _.filter(releases, release => {
             return _.includes(config.aha_whitelist.releases, release.id);
@@ -98,24 +108,24 @@ export function processAhaJobsFromQueue() {
         .catch(err => {
           done(err);
         });
-    }, timeout);
+    }, ahaTimeout);
   });
 
   queue.process(queueNames.seed_releases, (j, done) => {
-    requestsMade++;
+    ahaRequestsMade++;
     checkRequestsCount(j);
 
     setTimeout(() => {
       console.log(
-        `[#${requestsMade}][${j.type}] Seeding release: ${j.data.release.name}`
+        `[#${ahaRequestsMade}][${j.type}] Seeding release: ${j.data.release.name}`
       );
-      timeout = 100;
+      ahaTimeout = 100;
 
-      Seeder.AhaRelease.getDetailedRelease(j.data.release.id).then(data => {
+      Loader.AhaRelease.getDetailedRelease(j.data.release.id).then(data => {
         DAL.Aha.Release.create(
-          Seeder.AhaRelease.cleanReleaseObject(data.release, j.data.product)
+          Loader.AhaRelease.cleanReleaseObject(data.release, j.data.product)
         )
-          .then(s => {
+          .then(() => {
             queue
               .create(queueNames.list_features, { release: data.release })
               .save();
@@ -126,24 +136,24 @@ export function processAhaJobsFromQueue() {
             done(err);
           });
       });
-    }, timeout);
+    }, ahaTimeout);
   });
 
   // FEATURES
   queue.process(queueNames.list_features, (j, done) => {
-    requestsMade++;
+    ahaRequestsMade++;
 
     checkRequestsCount(j);
 
     setTimeout(() => {
       console.log(
-        `[#${requestsMade}][${j.type}] Processing features for ${
+        `[#${ahaRequestsMade}][${j.type}] Processing features for ${
           j.data.release.name
         }`
       );
-      timeout = 100;
+      ahaTimeout = 100;
 
-      Seeder.AhaFeature.createDetailedFeatureJobs(j.data.release)
+      Loader.AhaFeature.createDetailedFeatureJobs(j.data.release)
         .then(features => {
           _.forEach(features, feature => {
             queue.create(queueNames.seed_features, { feature, release: j.data.release }).save();
@@ -154,26 +164,27 @@ export function processAhaJobsFromQueue() {
           console.log(err);
           done(err);
         });
-    }, timeout);
+    }, ahaTimeout);
   });
 
   queue.process(queueNames.seed_features, (j, done) => {
-    requestsMade++;
+    ahaRequestsMade++;
 
     checkRequestsCount(j);
 
     setTimeout(() => {
       console.log(
-        `[#${requestsMade}][${j.type}] Processing ${j.data.feature.name}`
+        `[#${ahaRequestsMade}][${j.type}] Processing ${j.data.feature.name}`
       );
-      timeout = 100;
+      ahaTimeout = 100;
 
-      Seeder.AhaFeature.getDetailedFeature(j.data.feature.id)
+      Loader.AhaFeature.getDetailedFeature(j.data.feature.id)
         .then(data => {
           DAL.Aha.Feature.create(
-            Seeder.AhaFeature.cleanFeatureObject(data.feature, j.data.release)
+            Loader.AhaFeature.cleanFeatureObject(data.feature, j.data.release)
           )
-            .then(savedFeature => {
+            .then((saved_feature) => {
+              queue.create(queueNames.query_issues, { feature: data.feature }).save();
               done();
             })
             .catch(err => {
@@ -185,7 +196,32 @@ export function processAhaJobsFromQueue() {
           console.log(err);
           done(err);
         });
-    }, timeout);
+    }, ahaTimeout);
+  });
+
+  queue.process(queueNames.query_issues, (j, done) => {
+    jiraRequestsMade++;
+
+    checkRequestsCount(j);
+
+    setTimeout(() => {
+      console.log(
+        `[#${jiraRequestsMade}][${j.type}] Processing ${j.data.feature.name}`
+      );
+      jiraTimeout = 100;
+
+      Loader.Issues.getIssuesByAhaName(j.data.feature.name)
+        .then(data => {
+          _.forEach(data.issues, issue => {
+            DAL.Jira.Issue.create(Loader.Issues.cleanObject(issue));
+          });
+          done();
+        })
+        .catch(err => {
+          // console.log(err);
+          done(err);
+        });
+    }, jiraTimeout);
   });
 }
 

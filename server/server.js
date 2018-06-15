@@ -44,7 +44,7 @@ import { fetchComponentData } from './util/fetchData';
 import serverRoutes from './routes/';
 
 import serverConfig from './config';
-import * as Seeder from './seeders';
+import * as Seeder from './loaders';
 import db from './models';
 import * as q from './queue';
 // Set native promises as mongoose promise

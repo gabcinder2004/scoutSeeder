@@ -1,8 +1,4 @@
 import * as AhaController from '../controllers/aha';
-import * as QueueNames from '../util/queueNames';
-
-const kue = require('kue');
-const queue = kue.createQueue();
 const _ = require('lodash');
 
 function cleanFeatureObject(f, r) {

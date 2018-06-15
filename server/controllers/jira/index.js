@@ -7,7 +7,6 @@ export const JIRA_URL = 'http://ultidev/rest/api/2';
 
 export function queryJira(url) {
   return new Promise((resolve, reject) => {
-    console.log(`JIRA: querying ${url}`);
     var auth = new Buffer(process.env.JU + ':' + process.env.JP).toString('base64');
 
     axios(`${url}`, {
