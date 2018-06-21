@@ -50,9 +50,9 @@ import * as q from './queue';
 // Set native promises as mongoose promise
 mongoose.Promise = global.Promise;
 
-db.sequelize.sync().then(() => {
+db.sequelize.sync({ force: false }).then(() => {
   q.initialize();
-  Seeder.seedAll();
+  // Seeder.seedAll();
 });
 
 // Apply body Parser and server public assets and routes

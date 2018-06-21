@@ -23,9 +23,9 @@ function cleanFeatureObject(f, r) {
         }
         break;
       default:
-        console.log(
-          `Custom field used that is not being tracked: ${field.name}`
-        );
+        // console.log(
+        //   `Custom field used that is not being tracked: ${field.name}`
+        // );
         break;
     }
   });
@@ -36,11 +36,11 @@ function cleanFeatureObject(f, r) {
   }
 
   return {
-    id: f.id,
+    key: f.id,
     name: f.name,
     type: f.workflow_kind.name,
     status: f.workflow_status.name,
-    reference_num: f.reference_num,
+    ref: f.reference_num,
     owner: assignedTo,
     createdBy: f.created_by_user.name,
     start_date: f.start_date,
@@ -75,7 +75,7 @@ function getDetailedFeature(featureId) {
 function createDetailedFeatureJobs(release) {
   return new Promise((resolve, reject) => {
     AhaController.queryAha(
-      `${AhaController.API_URL}/releases/${release.id}/features?per_page=200`
+      `${AhaController.API_URL}/releases/${release.key}/features?per_page=200`
     )
       .then(data => {
         resolve(data.features);

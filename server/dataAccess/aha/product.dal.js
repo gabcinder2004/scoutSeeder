@@ -1,13 +1,23 @@
 import db from '../../models';
+import * as Error from '../error.dal';
 
-function upsert(values, condition) {
+function findAll() {
   return new Promise((resolve, reject) => {
-    db.Product.findOne({ where: condition })
-      .then(obj => {
-        if (obj) {
-          resolve(obj.update(values));
-        }
-        resolve(db.Product.create(values));
+    db.Product.findAll()
+      .then(results => {
+        resolve(results);
+      })
+      .catch(err => {
+        reject(err);
+      });
+  });
+}
+
+function findById(id) {
+  return new Promise((resolve, reject) => {
+    db.Product.findById(id)
+      .then(result => {
+        resolve(result);
       })
       .catch(err => {
         reject(err);
@@ -22,30 +32,26 @@ function create(product) {
         resolve(obj);
       })
       .catch(err => {
-        reject(err);
+        Error.create({
+          type: err.message,
+          message: err.errors[0].message,
+          path: err.errors[0].value,
+          status: 'SQL FAIL',
+          other: 'products',
+        })
+          .then(() => {
+            reject();
+          })
+          .catch(e => {
+            console.log(e);
+            reject();
+          });
       });
   });
 }
 
-function findAll() {
-  return new Promise(resolve => {
-    db.Product.findAll().then(obj => {
-      resolve(obj);
-    });
-  });
-}
-
-function findOneById(id) {
-  return new Promise(resolve => {
-    db.Product.findOne({ where: { id } }).then(obj => {
-      resolve(obj);
-    });
-  });
-}
-
 module.exports = {
-  upsert,
   create,
-  findOneById,
   findAll,
+  findById,
 };

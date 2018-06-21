@@ -5,5 +5,5 @@ import * as Release from "./release.dal";
 module.exports = {
     Feature,
     Product,
-    Release
+    Release,
 };

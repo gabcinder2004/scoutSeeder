@@ -1,13 +1,17 @@
 module.exports = (sequelize, DataTypes) => {
   const Release = sequelize.define('Release', {
     id: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       primaryKey: true,
+      autoIncrement: true,
+    },
+    key: {
+      type: DataTypes.STRING,
     },
     name: {
       type: DataTypes.STRING,
     },
-    reference_num: DataTypes.STRING,
+    reference_num: { type: DataTypes.STRING },
     start_date: DataTypes.DATE,
     release_date: DataTypes.DATE,
     development_started_date: DataTypes.DATE,
@@ -22,7 +26,7 @@ module.exports = (sequelize, DataTypes) => {
     remaining_estimate: DataTypes.SMALLINT,
     work_units: DataTypes.SMALLINT,
     work_done: DataTypes.SMALLINT,
-    // ProductId: DataTypes.STRING,
+    // Product: DataTypes.STRING,
 
   }, {});
 

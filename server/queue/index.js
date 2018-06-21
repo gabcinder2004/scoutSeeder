@@ -11,11 +11,7 @@ export function initialize() {
     console.info('Queue is ready!');
   });
 
-  queue.on('failed', err => {
-    console.error('There was an error in the main queue!');
-    console.error(err);
-    console.error(err.stack);
-  });
+  
 
   queue.on('complete', () => {
     console.info('Job complete');

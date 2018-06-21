@@ -1,15 +1,40 @@
 import db from '../../models';
+import * as Error from '../error.dal';
 
-function upsert(values, condition) {
+function findAll() {
   return new Promise((resolve, reject) => {
-    db.Release.findOne({ where: condition })
-      .then(obj => {
-        if (obj) {
-          resolve(obj.update(values));
-        }
-        resolve(db.Release.create(values));
+    db.Release.findAll()
+      .then(results => {
+        resolve(results);
       })
       .catch(err => {
+        reject(err);
+      });
+  });
+}
+
+function findById(id) {
+  return new Promise((resolve, reject) => {
+    db.Release.findAll({ where: { id } })
+      .then(result => {
+        resolve(result);
+      })
+      .catch(err => {
+        reject(err);
+      });
+  });
+}
+
+function findByProductId(productId) {
+  return new Promise((resolve, reject) => {
+    db.Release.findAll({
+      where: { ProductId: productId },
+    })
+      .then(result => {
+        resolve(result);
+      })
+      .catch(err => {
+        console.log(err);
         reject(err);
       });
   });
@@ -23,22 +48,27 @@ function create(release) {
       })
       .catch(err => {
         console.log(err);
-        console.log(release.owner);
-        reject(err);
+        Error.create({
+          type: err.message,
+          message: err.errors[0].message,
+          path: err.errors[0].value,
+          status: 'SQL FAIL',
+          other: 'releases',
+        })
+          .then(() => {
+            reject();
+          })
+          .catch(e => {
+            console.log(e);
+            reject();
+          });
       });
   });
 }
 
-function findOneById(id) {
-  return new Promise(resolve => {
-    db.Release.findOne({ where: { id } }).then(obj => {
-      resolve(obj);
-    });
-  });
-}
-
 module.exports = {
-  upsert,
+  findAll,
+  findById,
+  findByProductId,
   create,
-  findOneById,
 };

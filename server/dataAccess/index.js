@@ -1,18 +1,21 @@
-import * as Aha from "./aha";
-import * as Jira from "./jira";
+import * as Aha from './aha';
+import * as Jira from './jira';
+import * as Error from './error.dal';
+import db from '../models';
 
-// function wipeDatabase(){
-//     db.sequelize.query("SET FOREIGN_KEY_CHECKS = 0")
-// .then(function(result){
-//    return db.sequelize.sync({force: true});
-// }).then(function(){
-//    return db.sequelize.query("SET FOREIGN_KEY_CHECKS = 1");
-// }).catch(function(err){
-//    res.json({isError : true, status: err.message});
-// });
-// }
+const dropDB = () => {
+  return new Promise((resolve, reject) => {
+    db.sequelize.query('drop database scout;').then(() => {
+      db.sequelize.query('create schema scout;').then(() => {
+        resolve();
+      });
+    });
+  });
+};
 
 module.exports = {
-    Aha,
-    Jira
+  Aha,
+  Jira,
+  Error,
+  dropDB
 };

@@ -66,12 +66,15 @@ export function processAhaJobsFromQueue() {
 
     setTimeout(() => {
       console.log(
-        `[#${ahaRequestsMade}][${j.type}] Processing product: ${j.data.product.name}`
+        `[#${ahaRequestsMade}][${j.type}] Processing product: ${
+          j.data.product.name
+        }`
       );
       ahaTimeout = 100;
       Loader.AhaProduct.getDetailedProduct(j.data.product).then(p => {
-        DAL.Aha.Product.create(p).then(() => {
-          queue.create(queueNames.list_releases, { product: p }).save();
+        DAL.Aha.Product.create(p).then((sp) => {
+          // console.log(sp);
+          queue.create(queueNames.list_releases, { product: sp }).save();
           done();
         });
       });
@@ -91,9 +94,9 @@ export function processAhaJobsFromQueue() {
         }`
       );
       ahaTimeout = 100;
-
+      console.log(j.data.product);
       Loader.AhaRelease.getAllReleasesForProduct(j.data.product)
-        .then((releases) => {
+        .then(releases => {
           const filteredReleases = _.filter(releases, release => {
             return _.includes(config.aha_whitelist.releases, release.id);
           });
@@ -101,7 +104,12 @@ export function processAhaJobsFromQueue() {
         })
         .then(filteredReleases => {
           _.forEach(filteredReleases, r => {
-            queue.create(queueNames.seed_releases, { release: r, product: j.data.product }).save();
+            queue
+              .create(queueNames.seed_releases, {
+                release: r,
+                product: j.data.product,
+              })
+              .save();
           });
           done();
         })
@@ -117,7 +125,9 @@ export function processAhaJobsFromQueue() {
 
     setTimeout(() => {
       console.log(
-        `[#${ahaRequestsMade}][${j.type}] Seeding release: ${j.data.release.name}`
+        `[#${ahaRequestsMade}][${j.type}] Seeding release: ${
+          j.data.release.name
+        }`
       );
       ahaTimeout = 100;
 
@@ -125,14 +135,13 @@ export function processAhaJobsFromQueue() {
         DAL.Aha.Release.create(
           Loader.AhaRelease.cleanReleaseObject(data.release, j.data.product)
         )
-          .then(() => {
+          .then((sr) => {
             queue
-              .create(queueNames.list_features, { release: data.release })
+              .create(queueNames.list_features, { release: sr })
               .save();
             done();
           })
           .catch(err => {
-            console.log(err);
             done(err);
           });
       });
@@ -156,12 +165,16 @@ export function processAhaJobsFromQueue() {
       Loader.AhaFeature.createDetailedFeatureJobs(j.data.release)
         .then(features => {
           _.forEach(features, feature => {
-            queue.create(queueNames.seed_features, { feature, release: j.data.release }).save();
+            queue
+              .create(queueNames.seed_features, {
+                feature,
+                release: j.data.release,
+              })
+              .save();
           });
           done();
         })
         .catch(err => {
-          console.log(err);
           done(err);
         });
     }, ahaTimeout);
@@ -183,17 +196,18 @@ export function processAhaJobsFromQueue() {
           DAL.Aha.Feature.create(
             Loader.AhaFeature.cleanFeatureObject(data.feature, j.data.release)
           )
-            .then((saved_feature) => {
-              queue.create(queueNames.query_issues, { feature: data.feature }).save();
+            .then((sf) => {
+              queue
+                .create(queueNames.query_issues, { feature: sf, release: j.data.release })
+                .save();
               done();
             })
             .catch(err => {
-              console.log(err);
+              // console.log(err);
               done(err);
             });
         })
         .catch(err => {
-          console.log(err);
           done(err);
         });
     }, ahaTimeout);
@@ -210,15 +224,18 @@ export function processAhaJobsFromQueue() {
       );
       jiraTimeout = 100;
 
-      Loader.Issues.getIssuesByAhaName(j.data.feature.name)
+      Loader.Issues.getIssuesByAhaName(j.data.feature, j.data.release)
         .then(data => {
           _.forEach(data.issues, issue => {
-            DAL.Jira.Issue.create(Loader.Issues.cleanObject(issue));
+            DAL.Jira.Issue.create(Loader.Issues.cleanObject(issue, j.data.feature))
+              .then(() => {})
+              .catch(err => {
+                console.log(err);
+              });
           });
           done();
         })
         .catch(err => {
-          // console.log(err);
           done(err);
         });
     }, jiraTimeout);

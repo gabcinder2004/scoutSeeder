@@ -2,7 +2,7 @@ import * as AhaController from '../controllers/aha';
 
 function cleanReleaseObject(r, product) {
   return {
-    id: r.id,
+    key: r.id,
     name: r.name,
     reference_num: r.reference_num,
     start_date: r.start_date,
@@ -38,7 +38,7 @@ function getDetailedRelease(releaseId) {
 function getAllReleasesForProduct(product) {
   return new Promise((resolve, reject) => {
     AhaController.queryAha(
-      `${AhaController.API_URL}/products/${product.id}/releases`
+      `${AhaController.API_URL}/products/${product.key}/releases`
     )
       .then(data => {
         resolve(data.releases);

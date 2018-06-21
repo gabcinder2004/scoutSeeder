@@ -1,4 +1,5 @@
 import db from '../../models';
+import * as Error from '../error.dal';
 
 function create(issue) {
   return new Promise((resolve, reject) => {
@@ -7,22 +8,26 @@ function create(issue) {
         resolve(obj);
       })
       .catch(err => {
-        console.log(err);
-        reject(err);
+        Error.create(
+          {
+            type: err.message,
+            message: err.errors[0].message,
+            path: err.errors[0].value,
+            status: 'SQL FAIL',
+            other: 'issues',
+          }
+        )
+          .then(() => {
+            reject(err);
+          })
+          .catch(e => {
+            console.log(e);
+            reject(e);
+          });
       });
-  });
-}
-
-
-function findOneById(id) {
-  return new Promise(resolve => {
-    db.Feature.findOne({ where: { id } }).then(obj => {
-      resolve(obj);
-    });
   });
 }
 
 module.exports = {
   create,
-  findOneById,
 };

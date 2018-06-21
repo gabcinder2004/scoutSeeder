@@ -1,15 +1,19 @@
 module.exports = (sequelize, DataTypes) => {
   const Feature = sequelize.define('Feature', {
     id: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       primaryKey: true,
+      autoIncrement: true,
+    },
+    ref: { type: DataTypes.STRING },
+    key: {
+      type: DataTypes.STRING,
     },
     name: {
       type: DataTypes.STRING,
     },
     type: DataTypes.STRING,
     status: DataTypes.STRING,
-    reference_num: DataTypes.STRING,
     owner: DataTypes.STRING,
     createdBy: DataTypes.STRING,
     start_date: DataTypes.DATE,
@@ -25,7 +29,7 @@ module.exports = (sequelize, DataTypes) => {
     compliance_score: DataTypes.STRING,
     internal_id: DataTypes.INTEGER,
     tags: DataTypes.JSON,
-    // ReleaseId: DataTypes.STRING,
+    // Release: DataTypes.STRING,
   }, {});
 
   Feature.associate = (models) => {

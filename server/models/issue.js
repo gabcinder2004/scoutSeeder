@@ -1,8 +1,12 @@
 module.exports = (sequelize, DataTypes) => {
   const Issue = sequelize.define('Issue', {
     id: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       primaryKey: true,
+      autoIncrement: true,
+    },
+    key: {
+      type: DataTypes.STRING,
     },
     summary: {
       type: DataTypes.STRING,
@@ -20,7 +24,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {});
 
   Issue.associate = (models) => {
-        // Issue.belongsTo(models.Release);
+    Issue.belongsTo(models.Feature);
   };
 
   return Issue;
