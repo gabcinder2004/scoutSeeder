@@ -1,7 +1,4 @@
 import * as DAL from '../../dataAccess/';
-import { queryAha, API_URL } from './';
-import * as time from '../../util/time';
-const _ = require('lodash');
 
 export function getAll(req, res) {
   DAL.Aha.Product.findAll().then(savedProducts => {

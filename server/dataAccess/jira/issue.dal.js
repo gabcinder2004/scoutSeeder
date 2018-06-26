@@ -28,6 +28,23 @@ function create(issue) {
   });
 }
 
+function findByFeatureId(featureId) {
+  return new Promise((resolve, reject) => {
+    db.Issue.findAll({
+      where: { FeatureId: featureId },
+    })
+      .then(result => {
+        resolve(result);
+      })
+      .catch(err => {
+        console.log(err);
+        reject(err);
+      });
+  });
+}
+
+
 module.exports = {
   create,
+  findByFeatureId,
 };
