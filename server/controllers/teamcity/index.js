@@ -1,10 +1,10 @@
 import axios from 'axios';
-import config from '../../config';
-export function queryJira(url, ref) {
+
+export function queryTeamcity(url, ref) {
   return new Promise((resolve, reject) => {
-    var auth = new Buffer(
-      config.jira_user + ':' + config.jira_pass
-    ).toString('base64');
+    var auth = new Buffer(process.env.JIRA_USER + ':' + process.env.JIRA_PASS).toString(
+      'base64'
+    );
 
     axios(`${url}`, {
       headers: {
@@ -21,5 +21,5 @@ export function queryJira(url, ref) {
 }
 
 module.exports = {
-  queryJira: queryJira
+  queryTeamcity: queryTeamcity,
 };
